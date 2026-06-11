@@ -1,4 +1,4 @@
-const CACHE_NAME = 'localizador-gsan-v2';
+const CACHE_NAME = 'localizador-gsan-v3';
 const APP_FILES = [
   './',
   './index.html',
