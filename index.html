@@ -178,6 +178,45 @@
       gap: 12px;
     }
 
+    .quick-search {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .quick-search input {
+      font-size: 18px;
+      min-height: 48px;
+    }
+
+    .settings-panel summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: #174a86;
+      list-style: none;
+    }
+
+    .settings-panel summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .settings-panel summary::after {
+      content: "Abrir";
+      float: right;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .settings-panel[open] summary::after {
+      content: "Fechar";
+    }
+
+    .settings-body {
+      margin-top: 14px;
+    }
+
     .results-head {
       display: flex;
       justify-content: space-between;
@@ -255,6 +294,46 @@
       font-size: 12px;
     }
 
+    .cards-list {
+      display: none;
+    }
+
+    .result-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fff;
+      margin-bottom: 10px;
+    }
+
+    .result-card h3 {
+      margin: 0 0 6px;
+      font-size: 15px;
+    }
+
+    .card-line {
+      margin: 4px 0;
+      color: #344054;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 8px 0 10px;
+    }
+
+    .pill {
+      background: #eef4ff;
+      border: 1px solid #c9d8ef;
+      border-radius: 999px;
+      color: #174a86;
+      font-size: 12px;
+      padding: 4px 8px;
+    }
+
     @media (max-width: 920px) {
       .top-grid,
       .filters { grid-template-columns: 1fr; }
@@ -263,6 +342,71 @@
       .results-head {
         align-items: flex-start;
         flex-direction: column;
+      }
+    }
+
+    @media (max-width: 720px) {
+      header {
+        padding: 14px 14px;
+      }
+
+      header h1 {
+        font-size: 18px;
+      }
+
+      header p {
+        font-size: 12px;
+      }
+
+      main {
+        margin: 10px auto 22px;
+        width: min(100% - 14px, 1240px);
+      }
+
+      .panel {
+        padding: 12px;
+        margin-bottom: 10px;
+      }
+
+      .quick-search {
+        grid-template-columns: 1fr;
+      }
+
+      .quick-search button,
+      .actions button {
+        width: 100%;
+      }
+
+      .top-grid {
+        display: block;
+      }
+
+      .status {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .status-row {
+        display: block;
+        border-bottom: 0;
+        padding: 0;
+      }
+
+      .status span {
+        display: block;
+        text-align: left;
+        margin-top: 2px;
+      }
+
+      .desktop-filters {
+        display: none;
+      }
+
+      .table-wrap {
+        display: none;
+      }
+
+      .cards-list {
+        display: block;
       }
     }
   </style>
@@ -274,20 +418,18 @@
   </header>
 
   <main>
-    <section class="top-grid">
-      <div id="importBox" class="panel import-box">
-        <label for="baseInput">Carregar ou substituir base GSAN</label>
-        <input id="baseInput" type="file">
-        <p class="hint">
-          Use aqui somente a base .gsan gerada pelo conversor. Se você tiver CSV ou Excel, abra primeiro o Conversor de Base GSAN.
-        </p>
-        <div class="actions">
-          <button id="clearBaseBtn" class="danger" type="button">Limpar base atual</button>
-          <button id="clearFiltersBtn" class="secondary" type="button">Limpar filtros</button>
+    <section class="panel">
+      <div class="quick-search">
+        <div>
+          <label for="quickSearch">Buscar</label>
+          <input id="quickSearch" type="text" autocomplete="off" placeholder="Digite matrícula, cliente, rua, bairro, rota ou sequência">
         </div>
-        <div id="message" class="message">Carregue uma base .gsan para iniciar a consulta.</div>
+        <button id="quickClearBtn" class="secondary" type="button">Limpar</button>
       </div>
+      <div id="message" class="message">Carregue uma base .gsan para iniciar a consulta.</div>
+    </section>
 
+    <section class="top-grid">
       <div class="panel">
         <div class="status">
           <div class="status-row"><strong>Base ativa</strong><span id="activeFile">Nenhuma</span></div>
@@ -296,9 +438,24 @@
           <div class="status-row"><strong>Modo</strong><span>Local, separado e renovável</span></div>
         </div>
       </div>
+
+      <details id="settingsPanel" class="panel import-box settings-panel">
+        <summary>Base e manutenção</summary>
+        <div id="importBox" class="settings-body">
+          <label for="baseInput">Carregar ou substituir base GSAN</label>
+          <input id="baseInput" type="file">
+          <p class="hint">
+            Use somente a base .gsan gerada pelo conversor. A base real fica local no aparelho.
+          </p>
+          <div class="actions">
+            <button id="clearBaseBtn" class="danger" type="button">Limpar base atual</button>
+            <button id="clearFiltersBtn" class="secondary" type="button">Limpar filtros</button>
+          </div>
+        </div>
+      </details>
     </section>
 
-    <section class="panel">
+    <section class="panel desktop-filters">
       <div class="filters">
         <div>
           <label for="filterMatricula">Matrícula</label>
@@ -352,6 +509,9 @@
           </tbody>
         </table>
       </div>
+      <div id="cardsBody" class="cards-list">
+        <div class="empty">Carregue uma base para consultar.</div>
+      </div>
     </section>
   </main>
 
@@ -375,6 +535,8 @@
     const els = {
       baseInput: document.getElementById('baseInput'),
       importBox: document.getElementById('importBox'),
+      quickSearch: document.getElementById('quickSearch'),
+      quickClearBtn: document.getElementById('quickClearBtn'),
       clearBaseBtn: document.getElementById('clearBaseBtn'),
       clearFiltersBtn: document.getElementById('clearFiltersBtn'),
       message: document.getElementById('message'),
@@ -383,6 +545,7 @@
       baseDate: document.getElementById('baseDate'),
       resultCount: document.getElementById('resultCount'),
       resultsBody: document.getElementById('resultsBody'),
+      cardsBody: document.getElementById('cardsBody'),
       filters: {
         matricula: document.getElementById('filterMatricula'),
         cliente: document.getElementById('filterCliente'),
@@ -396,6 +559,8 @@
     els.baseInput.addEventListener('change', handleBaseFile);
     els.clearBaseBtn.addEventListener('click', clearBase);
     els.clearFiltersBtn.addEventListener('click', clearFilters);
+    els.quickClearBtn.addEventListener('click', clearFilters);
+    els.quickSearch.addEventListener('input', scheduleRender);
     Object.values(els.filters).forEach(input => input.addEventListener('input', scheduleRender));
     els.importBox.addEventListener('dragover', event => event.preventDefault());
     els.importBox.addEventListener('drop', handleDrop);
@@ -565,6 +730,7 @@
 
     function clearFilters(showMessage = true) {
       Object.values(els.filters).forEach(input => { input.value = ''; });
+      els.quickSearch.value = '';
       renderResults();
       if (showMessage) setMessage('Filtros limpos.', '');
     }
@@ -577,15 +743,19 @@
       }
 
       const filters = Object.fromEntries(Object.entries(els.filters).map(([key, input]) => [key, normalizeText(input.value)]));
-      const hasFilter = Object.values(filters).some(Boolean);
+      const quick = normalizeText(els.quickSearch.value);
+      const hasFilter = Boolean(quick) || Object.values(filters).some(Boolean);
       setMessage(hasFilter ? 'Pesquisando na base local...' : 'Exibindo primeiros registros da base local.', '');
 
-      const result = await scanRecords(filters, hasFilter, token);
+      const result = await scanRecords(filters, quick, hasFilter, token);
       if (token !== state.renderToken) return;
 
       els.resultsBody.innerHTML = result.rows.length
         ? result.rows.map(renderRow).join('')
         : '<tr><td colspan="9"><div class="empty">Nenhum registro encontrado com os filtros informados.</div></td></tr>';
+      els.cardsBody.innerHTML = result.rows.length
+        ? result.rows.map(renderCard).join('')
+        : '<div class="empty">Nenhum registro encontrado com os filtros informados.</div>';
 
       const total = hasFilter ? result.count : state.totalRows;
       const extra = total > MAX_VISIBLE_ROWS ? ` Mostrando os primeiros ${MAX_VISIBLE_ROWS.toLocaleString('pt-BR')}.` : '';
@@ -593,7 +763,7 @@
       setMessage('Consulta pronta.', 'ok');
     }
 
-    async function scanRecords(filters, hasFilter, token) {
+    async function scanRecords(filters, quick, hasFilter, token) {
       const db = await openDb();
       return new Promise((resolve, reject) => {
         const transaction = db.transaction(RECORD_STORE, 'readonly');
@@ -617,7 +787,9 @@
           }
 
           const row = cursor.value;
-          const matches = !hasFilter || Object.entries(filters).every(([key, value]) => !value || row._search[key].includes(value));
+          const quickMatch = !quick || Object.values(row._search).some(value => value.includes(quick));
+          const detailedMatch = Object.entries(filters).every(([key, value]) => !value || row._search[key].includes(value));
+          const matches = !hasFilter || (quickMatch && detailedMatch);
           if (matches) {
             count++;
             if (rows.length < MAX_VISIBLE_ROWS) rows.push(row);
@@ -647,6 +819,7 @@
 
     function renderEmpty(text) {
       els.resultsBody.innerHTML = `<tr><td colspan="9"><div class="empty">${escapeHtml(text)}</div></td></tr>`;
+      els.cardsBody.innerHTML = `<div class="empty">${escapeHtml(text)}</div>`;
       els.resultCount.textContent = 'Nenhum registro exibido.';
     }
 
@@ -669,6 +842,28 @@
           <td>${escapeHtml(row.latitude)}</td>
           <td>${mapCell}</td>
         </tr>
+      `;
+    }
+
+    function renderCard(row) {
+      const lat = parseCoordinate(row.latitude);
+      const lng = parseCoordinate(row.longitude);
+      const mapButton = Number.isFinite(lat) && Number.isFinite(lng)
+        ? `<button class="map-btn" type="button" onclick="openMap('${String(lat).replace(/'/g, '')}', '${String(lng).replace(/'/g, '')}')">Abrir no Mapa</button>`
+        : '<span class="coord-missing">Sem coordenada válida</span>';
+
+      return `
+        <article class="result-card">
+          <h3>${escapeHtml(row.cliente || 'Cliente sem nome')}</h3>
+          <p class="card-line"><strong>Matrícula:</strong> ${escapeHtml(row.matricula)}</p>
+          <p class="card-line"><strong>Endereço:</strong> ${escapeHtml(row.endereco)}</p>
+          <p class="card-line"><strong>Bairro:</strong> ${escapeHtml(row.bairro)}</p>
+          <div class="card-meta">
+            <span class="pill">Rota ${escapeHtml(row.rota)}</span>
+            <span class="pill">Seq. ${escapeHtml(row.sequencia)}</span>
+          </div>
+          ${mapButton}
+        </article>
       `;
     }
 
