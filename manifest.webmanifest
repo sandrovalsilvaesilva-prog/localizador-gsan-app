@@ -1,0 +1,18 @@
+{
+  "name": "Consulta de Localização GSAN",
+  "short_name": "Localizador GSAN",
+  "description": "Consulta local de clientes e coordenadas GSAN usando base separada .gsan.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f7fb",
+  "theme_color": "#0f3f78",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

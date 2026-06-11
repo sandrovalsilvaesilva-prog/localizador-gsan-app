@@ -1,0 +1,814 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f3f78">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <title>Consulta de Localização GSAN</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #667085;
+      --line: #d9e1ec;
+      --brand: #1466cc;
+      --brand-dark: #0d4f9f;
+      --ok: #138a43;
+      --warn: #a15c00;
+      --danger: #b42318;
+      --shadow: 0 10px 25px rgba(20, 40, 80, .08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+    }
+
+    header {
+      background: #0f3f78;
+      color: #fff;
+      padding: 22px 24px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    header p {
+      margin: 6px 0 0;
+      color: #d7e7ff;
+      font-size: 14px;
+    }
+
+    main {
+      width: min(1240px, calc(100% - 32px));
+      margin: 20px auto 34px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .top-grid {
+      display: grid;
+      grid-template-columns: minmax(280px, 1.2fr) minmax(260px, .8fr);
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .import-box {
+      border: 1px dashed #9db5d3;
+      border-radius: 8px;
+      padding: 16px;
+      background: #f8fbff;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #344054;
+    }
+
+    input[type="file"],
+    input[type="text"] {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid #c7d2e1;
+      border-radius: 6px;
+      padding: 9px 10px;
+      font-size: 14px;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    input[type="file"] { padding: 8px; }
+
+    .hint {
+      margin: 9px 0 0;
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .status {
+      display: grid;
+      gap: 9px;
+      font-size: 14px;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid #eef2f7;
+      padding-bottom: 8px;
+    }
+
+    .status-row:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .status strong {
+      color: #344054;
+      font-weight: 700;
+    }
+
+    .status span {
+      text-align: right;
+      color: var(--muted);
+      word-break: break-word;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 6px;
+      padding: 10px 13px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #fff;
+      background: var(--brand);
+    }
+
+    button:hover { background: var(--brand-dark); }
+    button:disabled { cursor: not-allowed; opacity: .55; }
+
+    .secondary {
+      background: #eef4ff;
+      color: #174a86;
+      border: 1px solid #c9d8ef;
+    }
+
+    .secondary:hover { background: #dfeaff; }
+
+    .danger {
+      background: #fff1f0;
+      color: var(--danger);
+      border: 1px solid #f3b7b0;
+    }
+
+    .danger:hover { background: #ffe2df; }
+
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(140px, 1fr));
+      gap: 12px;
+    }
+
+    .results-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .results-head h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .message {
+      margin: 12px 0 0;
+      border-radius: 6px;
+      padding: 10px 12px;
+      background: #eef4ff;
+      color: #174a86;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .message.ok { background: #ecfdf3; color: var(--ok); }
+    .message.warn { background: #fff8e6; color: var(--warn); }
+    .message.error { background: #fff1f0; color: var(--danger); }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 980px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid #e8edf5;
+      padding: 10px;
+      text-align: left;
+      font-size: 13px;
+      vertical-align: top;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #f3f7fc;
+      color: #344054;
+      z-index: 1;
+    }
+
+    tr:hover td { background: #f9fbff; }
+
+    .empty {
+      padding: 22px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .map-btn {
+      white-space: nowrap;
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+
+    .coord-missing {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 920px) {
+      .top-grid,
+      .filters { grid-template-columns: 1fr; }
+      header { padding: 18px 16px; }
+      main { width: min(100% - 20px, 1240px); }
+      .results-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Consulta de Localização GSAN</h1>
+    <p>Aplicativo local de consulta. A base fica em arquivo separado e pode ser substituída quando for atualizada.</p>
+  </header>
+
+  <main>
+    <section class="top-grid">
+      <div id="importBox" class="panel import-box">
+        <label for="baseInput">Carregar ou substituir base GSAN</label>
+        <input id="baseInput" type="file">
+        <p class="hint">
+          Use aqui somente a base .gsan gerada pelo conversor. Se você tiver CSV ou Excel, abra primeiro o Conversor de Base GSAN.
+        </p>
+        <div class="actions">
+          <button id="clearBaseBtn" class="danger" type="button">Limpar base atual</button>
+          <button id="clearFiltersBtn" class="secondary" type="button">Limpar filtros</button>
+        </div>
+        <div id="message" class="message">Carregue uma base .gsan para iniciar a consulta.</div>
+      </div>
+
+      <div class="panel">
+        <div class="status">
+          <div class="status-row"><strong>Base ativa</strong><span id="activeFile">Nenhuma</span></div>
+          <div class="status-row"><strong>Registros carregados</strong><span id="totalRows">0</span></div>
+          <div class="status-row"><strong>Data da base</strong><span id="baseDate">-</span></div>
+          <div class="status-row"><strong>Modo</strong><span>Local, separado e renovável</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="filters">
+        <div>
+          <label for="filterMatricula">Matrícula</label>
+          <input id="filterMatricula" type="text" autocomplete="off" placeholder="Ex.: 12345">
+        </div>
+        <div>
+          <label for="filterCliente">Cliente</label>
+          <input id="filterCliente" type="text" autocomplete="off" placeholder="Nome do cliente">
+        </div>
+        <div>
+          <label for="filterEndereco">Rua / endereço</label>
+          <input id="filterEndereco" type="text" autocomplete="off" placeholder="Rua, avenida...">
+        </div>
+        <div>
+          <label for="filterBairro">Bairro</label>
+          <input id="filterBairro" type="text" autocomplete="off" placeholder="Bairro">
+        </div>
+        <div>
+          <label for="filterRota">Rota</label>
+          <input id="filterRota" type="text" autocomplete="off" placeholder="Rota">
+        </div>
+        <div>
+          <label for="filterSequencia">Sequência</label>
+          <input id="filterSequencia" type="text" autocomplete="off" placeholder="Sequência">
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="results-head">
+        <h2>Resultados</h2>
+        <span id="resultCount" class="hint">Nenhum registro exibido.</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Matrícula</th>
+              <th>Cliente</th>
+              <th>Endereço</th>
+              <th>Bairro</th>
+              <th>Rota</th>
+              <th>Sequência</th>
+              <th>Longitude / X</th>
+              <th>Latitude / Y</th>
+              <th>Mapa</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody">
+            <tr><td colspan="9"><div class="empty">Carregue uma base para consultar.</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const state = {
+      hasBase: false,
+      metadata: null,
+      totalRows: 0,
+      renderToken: 0
+    };
+
+    const MAX_VISIBLE_ROWS = 500;
+    const FILE_CHUNK_SIZE = 1024 * 1024 * 4;
+    const WRITE_BATCH_SIZE = 1000;
+    const DB_NAME = 'consulta-localizacao-gsan';
+    const RECORD_STORE = 'records';
+    const META_STORE = 'meta';
+    const META_KEY = 'base';
+    let renderTimer = null;
+
+    const els = {
+      baseInput: document.getElementById('baseInput'),
+      importBox: document.getElementById('importBox'),
+      clearBaseBtn: document.getElementById('clearBaseBtn'),
+      clearFiltersBtn: document.getElementById('clearFiltersBtn'),
+      message: document.getElementById('message'),
+      activeFile: document.getElementById('activeFile'),
+      totalRows: document.getElementById('totalRows'),
+      baseDate: document.getElementById('baseDate'),
+      resultCount: document.getElementById('resultCount'),
+      resultsBody: document.getElementById('resultsBody'),
+      filters: {
+        matricula: document.getElementById('filterMatricula'),
+        cliente: document.getElementById('filterCliente'),
+        endereco: document.getElementById('filterEndereco'),
+        bairro: document.getElementById('filterBairro'),
+        rota: document.getElementById('filterRota'),
+        sequencia: document.getElementById('filterSequencia')
+      }
+    };
+
+    els.baseInput.addEventListener('change', handleBaseFile);
+    els.clearBaseBtn.addEventListener('click', clearBase);
+    els.clearFiltersBtn.addEventListener('click', clearFilters);
+    Object.values(els.filters).forEach(input => input.addEventListener('input', scheduleRender));
+    els.importBox.addEventListener('dragover', event => event.preventDefault());
+    els.importBox.addEventListener('drop', handleDrop);
+    restoreSavedBase();
+
+    async function handleBaseFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      try {
+        await importSelectedBase(file);
+      } catch (error) {
+        setMessage(error.message || 'Não foi possível carregar a base.', 'error');
+      } finally {
+        event.target.value = '';
+      }
+    }
+
+    async function handleDrop(event) {
+      event.preventDefault();
+      const file = event.dataTransfer.files[0];
+      if (!file) return;
+      try {
+        await importSelectedBase(file);
+      } catch (error) {
+        setMessage(error.message || 'Não foi possível carregar a base.', 'error');
+      }
+    }
+
+    async function importSelectedBase(file) {
+      const extension = (file.name || '').split('.').pop().toLowerCase();
+      if (['csv', 'xlsx', 'xls'].includes(extension)) {
+        throw new Error('Você selecionou a planilha original. Primeiro use o Conversor de Base GSAN para gerar um arquivo .gsan. Depois carregue o .gsan aqui.');
+      }
+
+      setMessage('Importando base para o armazenamento local. Aguarde...', '');
+      els.clearBaseBtn.disabled = true;
+      els.baseInput.disabled = true;
+
+      try {
+        const result = await importGsanBase(file);
+        state.hasBase = true;
+        state.metadata = result.metadata;
+        state.totalRows = result.count;
+        updateBaseStatus(result.metadata, result.count, file.name || 'base-gsan.gsan');
+        clearFilters(false);
+        await renderResults();
+        setMessage('Base importada com sucesso. Ela ficou salva localmente neste navegador.', 'ok');
+      } finally {
+        els.clearBaseBtn.disabled = false;
+        els.baseInput.disabled = false;
+      }
+    }
+
+    async function importGsanBase(file) {
+      const decoder = new TextDecoder('utf-8');
+      let metadata = null;
+      let carry = '';
+      let lineNumber = 0;
+      let count = 0;
+      let batch = [];
+
+      await clearStoredData();
+
+      for (let offset = 0; offset < file.size; offset += FILE_CHUNK_SIZE) {
+        const end = Math.min(offset + FILE_CHUNK_SIZE, file.size);
+        const text = carry + decoder.decode(await file.slice(offset, end).arrayBuffer(), { stream: end < file.size });
+        const lines = text.split(/\r?\n/);
+        carry = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          lineNumber++;
+          if (lineNumber === 1) {
+            metadata = JSON.parse(line);
+            if (metadata.type !== 'gsan-location-base') throw new Error('Este arquivo não é uma base GSAN otimizada.');
+            metadata.fileName = file.name || 'base-gsan.gsan';
+          } else {
+            batch.push(arrayToRow(JSON.parse(line)));
+            count++;
+            if (batch.length >= WRITE_BATCH_SIZE) {
+              await addRecordBatch(batch);
+              batch = [];
+            }
+          }
+        }
+
+        if (batch.length) {
+          await addRecordBatch(batch);
+          batch = [];
+        }
+
+        const percent = Math.min(100, Math.round((end / file.size) * 100));
+        setMessage(`Importando base: ${percent}% concluído. Registros salvos: ${count.toLocaleString('pt-BR')}.`, '');
+        await pause();
+      }
+
+      const tail = decoder.decode();
+      if (tail) carry += tail;
+      if (carry.trim()) {
+        lineNumber++;
+        if (lineNumber === 1) {
+          metadata = JSON.parse(carry);
+          metadata.fileName = file.name || 'base-gsan.gsan';
+        } else {
+          batch.push(arrayToRow(JSON.parse(carry)));
+          count++;
+        }
+      }
+
+      if (batch.length) await addRecordBatch(batch);
+      if (!metadata) throw new Error('Arquivo de base inválido.');
+      if (!count) throw new Error('A base não possui registros válidos.');
+
+      metadata.fileName = file.name || metadata.fileName || 'base-gsan.gsan';
+      metadata.count = count;
+      await saveMetadata(metadata);
+      return { metadata, count };
+    }
+
+    function arrayToRow(record) {
+      const row = {
+        matricula: cleanCell(record[0]),
+        cliente: cleanCell(record[1]),
+        endereco: cleanCell(record[2]),
+        bairro: cleanCell(record[3]),
+        rota: cleanCell(record[4]),
+        sequencia: cleanCell(record[5]),
+        longitude: cleanCell(record[6]),
+        latitude: cleanCell(record[7])
+      };
+      row._search = {
+        matricula: normalizeText(row.matricula),
+        cliente: normalizeText(row.cliente),
+        endereco: normalizeText(row.endereco),
+        bairro: normalizeText(row.bairro),
+        rota: normalizeText(row.rota),
+        sequencia: normalizeText(row.sequencia)
+      };
+      return row;
+    }
+
+    async function restoreSavedBase() {
+      try {
+        const metadata = await readMetadata();
+        if (!metadata || !metadata.count) return;
+        state.hasBase = true;
+        state.metadata = metadata;
+        state.totalRows = metadata.count;
+        updateBaseStatus(metadata, metadata.count, metadata.fileName || 'base-gsan.gsan');
+        await renderResults();
+        setMessage('Base local restaurada. Para renovar, carregue uma nova base .gsan.', 'ok');
+      } catch (error) {
+        setMessage('Não foi possível restaurar a base local. Carregue novamente o arquivo .gsan.', 'warn');
+      }
+    }
+
+    async function clearBase() {
+      await clearStoredData();
+      state.hasBase = false;
+      state.metadata = null;
+      state.totalRows = 0;
+      updateBaseStatus(null, 0, 'Nenhuma');
+      clearFilters(false);
+      renderEmpty('Carregue uma base para consultar.');
+      setMessage('Base atual limpa. Carregue uma base .gsan para consultar.', 'warn');
+    }
+
+    function clearFilters(showMessage = true) {
+      Object.values(els.filters).forEach(input => { input.value = ''; });
+      renderResults();
+      if (showMessage) setMessage('Filtros limpos.', '');
+    }
+
+    async function renderResults() {
+      const token = ++state.renderToken;
+      if (!state.hasBase) {
+        renderEmpty('Carregue uma base para consultar.');
+        return;
+      }
+
+      const filters = Object.fromEntries(Object.entries(els.filters).map(([key, input]) => [key, normalizeText(input.value)]));
+      const hasFilter = Object.values(filters).some(Boolean);
+      setMessage(hasFilter ? 'Pesquisando na base local...' : 'Exibindo primeiros registros da base local.', '');
+
+      const result = await scanRecords(filters, hasFilter, token);
+      if (token !== state.renderToken) return;
+
+      els.resultsBody.innerHTML = result.rows.length
+        ? result.rows.map(renderRow).join('')
+        : '<tr><td colspan="9"><div class="empty">Nenhum registro encontrado com os filtros informados.</div></td></tr>';
+
+      const total = hasFilter ? result.count : state.totalRows;
+      const extra = total > MAX_VISIBLE_ROWS ? ` Mostrando os primeiros ${MAX_VISIBLE_ROWS.toLocaleString('pt-BR')}.` : '';
+      els.resultCount.textContent = `${total.toLocaleString('pt-BR')} registro(s) encontrado(s).${extra}`;
+      setMessage('Consulta pronta.', 'ok');
+    }
+
+    async function scanRecords(filters, hasFilter, token) {
+      const db = await openDb();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(RECORD_STORE, 'readonly');
+        const store = transaction.objectStore(RECORD_STORE);
+        const request = store.openCursor();
+        const rows = [];
+        let count = 0;
+
+        request.onsuccess = event => {
+          if (token !== state.renderToken) {
+            db.close();
+            resolve({ rows, count });
+            return;
+          }
+
+          const cursor = event.target.result;
+          if (!cursor) {
+            db.close();
+            resolve({ rows, count });
+            return;
+          }
+
+          const row = cursor.value;
+          const matches = !hasFilter || Object.entries(filters).every(([key, value]) => !value || row._search[key].includes(value));
+          if (matches) {
+            count++;
+            if (rows.length < MAX_VISIBLE_ROWS) rows.push(row);
+          }
+
+          if (!hasFilter && rows.length >= MAX_VISIBLE_ROWS) {
+            count = state.totalRows;
+            db.close();
+            resolve({ rows, count });
+            return;
+          }
+
+          cursor.continue();
+        };
+
+        request.onerror = () => {
+          db.close();
+          reject(request.error);
+        };
+      });
+    }
+
+    function scheduleRender() {
+      clearTimeout(renderTimer);
+      renderTimer = setTimeout(() => renderResults(), 250);
+    }
+
+    function renderEmpty(text) {
+      els.resultsBody.innerHTML = `<tr><td colspan="9"><div class="empty">${escapeHtml(text)}</div></td></tr>`;
+      els.resultCount.textContent = 'Nenhum registro exibido.';
+    }
+
+    function renderRow(row) {
+      const lat = parseCoordinate(row.latitude);
+      const lng = parseCoordinate(row.longitude);
+      const mapCell = Number.isFinite(lat) && Number.isFinite(lng)
+        ? `<button class="map-btn" type="button" onclick="openMap('${String(lat).replace(/'/g, '')}', '${String(lng).replace(/'/g, '')}')">Abrir no Mapa</button>`
+        : '<span class="coord-missing">Sem coordenada válida</span>';
+
+      return `
+        <tr>
+          <td>${escapeHtml(row.matricula)}</td>
+          <td>${escapeHtml(row.cliente)}</td>
+          <td>${escapeHtml(row.endereco)}</td>
+          <td>${escapeHtml(row.bairro)}</td>
+          <td>${escapeHtml(row.rota)}</td>
+          <td>${escapeHtml(row.sequencia)}</td>
+          <td>${escapeHtml(row.longitude)}</td>
+          <td>${escapeHtml(row.latitude)}</td>
+          <td>${mapCell}</td>
+        </tr>
+      `;
+    }
+
+    function updateBaseStatus(metadata, count, fileName) {
+      els.activeFile.textContent = fileName || 'Nenhuma';
+      els.totalRows.textContent = count.toLocaleString('pt-BR');
+      els.baseDate.textContent = metadata && metadata.generatedAt ? new Date(metadata.generatedAt).toLocaleString('pt-BR') : '-';
+    }
+
+    function openMap(lat, lng) {
+      window.open(`https://www.google.com/maps?q=${encodeURIComponent(lat + ',' + lng)}`, '_blank', 'noopener');
+    }
+
+    function parseCoordinate(value) {
+      if (value === null || value === undefined) return NaN;
+      return Number(String(value).trim().replace(/\s/g, '').replace(',', '.'));
+    }
+
+    function cleanCell(value) {
+      return String(value ?? '').trim();
+    }
+
+    function normalizeText(value) {
+      return String(value ?? '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, ' ');
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function setMessage(text, type) {
+      els.message.textContent = text;
+      els.message.className = `message ${type || ''}`.trim();
+    }
+
+    function openDb() {
+      return new Promise((resolve, reject) => {
+        if (typeof indexedDB === 'undefined') {
+          reject(new Error('Este navegador não liberou armazenamento local para a base.'));
+          return;
+        }
+
+        const request = indexedDB.open(DB_NAME, 2);
+        request.onupgradeneeded = () => {
+          const db = request.result;
+          if (!db.objectStoreNames.contains(RECORD_STORE)) {
+            db.createObjectStore(RECORD_STORE, { autoIncrement: true });
+          }
+          if (!db.objectStoreNames.contains(META_STORE)) {
+            db.createObjectStore(META_STORE);
+          }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function addRecordBatch(batch) {
+      const db = await openDb();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(RECORD_STORE, 'readwrite');
+        const store = transaction.objectStore(RECORD_STORE);
+        batch.forEach(row => store.add(row));
+        transaction.oncomplete = () => {
+          db.close();
+          resolve();
+        };
+        transaction.onerror = () => {
+          db.close();
+          reject(transaction.error);
+        };
+      });
+    }
+
+    async function clearStoredData() {
+      const db = await openDb();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([RECORD_STORE, META_STORE], 'readwrite');
+        transaction.objectStore(RECORD_STORE).clear();
+        transaction.objectStore(META_STORE).clear();
+        transaction.oncomplete = () => {
+          db.close();
+          resolve();
+        };
+        transaction.onerror = () => {
+          db.close();
+          reject(transaction.error);
+        };
+      });
+    }
+
+    async function saveMetadata(metadata) {
+      const db = await openDb();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(META_STORE, 'readwrite');
+        transaction.objectStore(META_STORE).put(metadata, META_KEY);
+        transaction.oncomplete = () => {
+          db.close();
+          resolve();
+        };
+        transaction.onerror = () => {
+          db.close();
+          reject(transaction.error);
+        };
+      });
+    }
+
+    async function readMetadata() {
+      const db = await openDb();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(META_STORE, 'readonly');
+        const request = transaction.objectStore(META_STORE).get(META_KEY);
+        request.onsuccess = () => {
+          db.close();
+          resolve(request.result);
+        };
+        request.onerror = () => {
+          db.close();
+          reject(request.error);
+        };
+      });
+    }
+
+    function pause() {
+      return new Promise(resolve => setTimeout(resolve, 0));
+    }
+
+    if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+      navigator.serviceWorker.register('./service-worker.js').catch(() => null);
+    }
+  </script>
+</body>
+</html>
